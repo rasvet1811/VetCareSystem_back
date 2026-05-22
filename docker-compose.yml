@@ -1,0 +1,91 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: vetcare
+      POSTGRES_USER: vetcare
+      POSTGRES_PASSWORD: vetcare_local
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./infrastructure/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  user-management:
+    build: ./services/user-management
+    ports:
+      - "3001:3001"
+    environment:
+      DATABASE_URL: postgresql://vetcare:vetcare_local@postgres:5432/vetcare
+      JWT_SECRET: vetcare_dev_secret_change_in_production
+      PORT: 3001
+    depends_on:
+      - postgres
+
+  clinical-history:
+    build: ./services/clinical-history
+    ports:
+      - "3002:3002"
+    environment:
+      DATABASE_URL: postgresql://vetcare:vetcare_local@postgres:5432/vetcare
+      JWT_SECRET: vetcare_dev_secret_change_in_production
+      PORT: 3002
+    depends_on:
+      - postgres
+
+  tracking-reminders:
+    build: ./services/tracking-reminders
+    ports:
+      - "3003:3003"
+    environment:
+      DATABASE_URL: postgresql://vetcare:vetcare_local@postgres:5432/vetcare
+      JWT_SECRET: vetcare_dev_secret_change_in_production
+      PORT: 3003
+    depends_on:
+      - postgres
+
+  storage-service:
+    build: ./services/storage-service
+    ports:
+      - "3004:3004"
+    environment:
+      DATABASE_URL: postgresql://vetcare:vetcare_local@postgres:5432/vetcare
+      JWT_SECRET: vetcare_dev_secret_change_in_production
+      PORT: 3004
+    depends_on:
+      - postgres
+
+  query-visualization:
+    build: ./services/query-visualization
+    ports:
+      - "3005:3005"
+    environment:
+      DATABASE_URL: postgresql://vetcare:vetcare_local@postgres:5432/vetcare
+      JWT_SECRET: vetcare_dev_secret_change_in_production
+      PORT: 3005
+      CLINICAL_HISTORY_URL: http://clinical-history:3002
+      TRACKING_REMINDERS_URL: http://tracking-reminders:3003
+    depends_on:
+      - postgres
+      - clinical-history
+      - tracking-reminders
+
+  notification-service:
+    build: ./services/notification-service
+    ports:
+      - "3006:3006"
+    environment:
+      DATABASE_URL: postgresql://vetcare:vetcare_local@postgres:5432/vetcare
+      JWT_SECRET: vetcare_dev_secret_change_in_production
+      PORT: 3006
+      EMAIL_HOST: smtp.gmail.com
+      EMAIL_PORT: 587
+      EMAIL_USER: tu_correo@gmail.com
+      EMAIL_PASS: tu_app_password
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:

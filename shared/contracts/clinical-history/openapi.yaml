@@ -1,0 +1,260 @@
+openapi: 3.0.3
+info:
+  title: Clinical History Service API
+  version: 1.0.0
+  description: Gestión del historial clínico de mascotas — VetCare System
+servers:
+  - url: /api/v1
+    description: API v1
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Pet:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        owner_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        species:
+          type: string
+        breed:
+          type: string
+        birth_date:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [macho, hembra]
+        weight:
+          type: number
+        color:
+          type: string
+    MedicalRecord:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pet_id:
+          type: string
+          format: uuid
+        vet_id:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date-time
+        reason:
+          type: string
+        diagnosis:
+          type: string
+        treatment:
+          type: string
+        notes:
+          type: string
+        weight:
+          type: number
+        temperature:
+          type: number
+    Vaccination:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pet_id:
+          type: string
+          format: uuid
+        vaccine_name:
+          type: string
+        date:
+          type: string
+          format: date
+        next_date:
+          type: string
+          format: date
+        batch_number:
+          type: string
+
+paths:
+  /patients:
+    get:
+      summary: Listar mascotas
+      tags: [Patients]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Lista de mascotas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pet'
+        '401':
+          description: Token inválido o ausente
+    post:
+      summary: Registrar nueva mascota
+      tags: [Patients]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, species]
+              properties:
+                name:
+                  type: string
+                species:
+                  type: string
+                breed:
+                  type: string
+                birth_date:
+                  type: string
+                  format: date
+                gender:
+                  type: string
+                  enum: [macho, hembra]
+                weight:
+                  type: number
+                color:
+                  type: string
+                owner_id:
+                  type: string
+                  format: uuid
+      responses:
+        '201':
+          description: Mascota creada
+        '400':
+          description: Datos inválidos
+
+  /patients/{id}/records:
+    get:
+      summary: Obtener historial clínico de una mascota
+      tags: [Records]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Historial clínico retornado exitosamente
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MedicalRecord'
+        '401':
+          description: Token de autenticación inválido o ausente
+        '403':
+          description: Sin permisos suficientes sobre esta mascota
+        '404':
+          description: Mascota no encontrada
+    post:
+      summary: Registrar nueva consulta médica
+      tags: [Records]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                diagnosis:
+                  type: string
+                treatment:
+                  type: string
+                notes:
+                  type: string
+                weight:
+                  type: number
+                temperature:
+                  type: number
+      responses:
+        '201':
+          description: Consulta registrada exitosamente
+        '400':
+          description: Datos de consulta inválidos
+
+  /patients/{id}/vaccinations:
+    get:
+      summary: Obtener vacunas de una mascota
+      tags: [Vaccinations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Lista de vacunas
+    post:
+      summary: Registrar vacuna
+      tags: [Vaccinations]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [vaccine_name, date]
+              properties:
+                vaccine_name:
+                  type: string
+                date:
+                  type: string
+                  format: date
+                next_date:
+                  type: string
+                  format: date
+                batch_number:
+                  type: string
+                notes:
+                  type: string
+      responses:
+        '201':
+          description: Vacuna registrada
