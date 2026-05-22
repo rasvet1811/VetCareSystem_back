@@ -7,6 +7,10 @@ const yaml = require('js-yaml');
 const fs = require('fs');
 const path = require('path');
 
+const swaggerUi = require('swagger-ui-express');
+const yaml = require('js-yaml');
+const fs = require('fs');
+const path = require('path');
 const remindersRoutes = require('./routes/reminders.routes');
 
 const app = express();
@@ -20,6 +24,12 @@ app.use(cors({
 app.use(express.json());
 
 const swaggerPath = path.join(__dirname, '../../openapi.yaml');
+if (fs.existsSync(swaggerPath)) {
+  const swaggerDocument = yaml.load(fs.readFileSync(swaggerPath, 'utf8'));
+  app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+}
+
+const swaggerPath = path.join(__dirname, '../openapi.yaml');
 if (fs.existsSync(swaggerPath)) {
   const swaggerDocument = yaml.load(fs.readFileSync(swaggerPath, 'utf8'));
   app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));

@@ -1,0 +1,174 @@
+openapi: 3.0.3
+info:
+  title: Tracking Reminders Service API
+  version: 1.0.0
+  description: Gestión de alertas y recordatorios preventivos — VetCare System
+servers:
+  - url: /api/v1
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Reminder:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        pet_id:
+          type: string
+          format: uuid
+        pet_name:
+          type: string
+        type:
+          type: string
+          enum: [vacuna, control, tratamiento, otro]
+        description:
+          type: string
+        due_date:
+          type: string
+          format: date
+        status:
+          type: string
+          enum: [pendiente, completado, cancelado]
+        created_at:
+          type: string
+          format: date-time
+
+paths:
+  /reminders:
+    get:
+      summary: Listar recordatorios
+      tags: [Reminders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: pet_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [pendiente, completado, cancelado]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [vacuna, control, tratamiento, otro]
+      responses:
+        '200':
+          description: Lista de recordatorios
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reminder'
+        '401':
+          description: Token inválido o ausente
+    post:
+      summary: Crear recordatorio
+      tags: [Reminders]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pet_id, type, description, due_date]
+              properties:
+                pet_id:
+                  type: string
+                  format: uuid
+                type:
+                  type: string
+                  enum: [vacuna, control, tratamiento, otro]
+                description:
+                  type: string
+                due_date:
+                  type: string
+                  format: date
+      responses:
+        '201':
+          description: Recordatorio creado
+        '400':
+          description: Datos inválidos
+
+  /reminders/{id}:
+    get:
+      summary: Obtener recordatorio por ID
+      tags: [Reminders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Recordatorio encontrado
+        '404':
+          description: Recordatorio no encontrado
+    put:
+      summary: Actualizar recordatorio
+      tags: [Reminders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum: [vacuna, control, tratamiento, otro]
+                description:
+                  type: string
+                due_date:
+                  type: string
+                  format: date
+                status:
+                  type: string
+                  enum: [pendiente, completado, cancelado]
+      responses:
+        '200':
+          description: Recordatorio actualizado
+        '404':
+          description: Recordatorio no encontrado
+    delete:
+      summary: Eliminar recordatorio
+      tags: [Reminders]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Recordatorio eliminado
+        '403':
+          description: Solo veterinario o administrador

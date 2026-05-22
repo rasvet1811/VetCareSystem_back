@@ -1,0 +1,101 @@
+openapi: 3.0.3
+info:
+  title: Storage Service API
+  version: 1.0.0
+  description: Persistencia centralizada y respaldo de datos — VetCare System
+servers:
+  - url: /api/v1
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+paths:
+  /storage/health:
+    get:
+      summary: Estado de la base de datos
+      tags: [Storage]
+      responses:
+        '200':
+          description: Base de datos conectada
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  database:
+                    type: string
+                  latency_ms:
+                    type: number
+        '503':
+          description: Base de datos desconectada
+
+  /storage/stats:
+    get:
+      summary: Estadísticas de almacenamiento (solo administrador)
+      tags: [Storage]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Estadísticas del sistema
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    type: object
+                    properties:
+                      users:
+                        type: integer
+                      pets:
+                        type: integer
+                      medical_records:
+                        type: integer
+                      vaccinations:
+                        type: integer
+                      reminders:
+                        type: integer
+                      notifications:
+                        type: integer
+        '403':
+          description: Solo administrador
+
+  /storage/backup:
+    get:
+      summary: Generar snapshot del sistema (solo administrador)
+      tags: [Storage]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Snapshot generado exitosamente
+        '403':
+          description: Solo administrador
+
+  /storage/{resource}:
+    get:
+      summary: Conteo de registros por recurso (solo administrador)
+      tags: [Storage]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: resource
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [users, pets, medical_records, vaccinations, reminders, notifications]
+      responses:
+        '200':
+          description: Total de registros del recurso
+        '400':
+          description: Recurso inválido
+        '403':
+          description: Solo administrador
